@@ -1,23 +1,40 @@
-import React from "react";
-import logo from "./logo.svg";
+import React, {useEffect, useState} from "react";
 import "./App.css";
 import NavBar from "./components/Navbar";
 import SearchBar from "./components/Searchbar";
-import { searchPokemon } from "./api";
+import Pokedex from "./components/Pokedex";
+import { getPokemon, getPokemonData } from "./api";
 
-const onSearchHandler = async (pokemon) => {
-  const result = await searchPokemon(pokemon)
-  console.log(result)
-}
+
 function App() {
+
+  const [loading,setLoading] = useState(false);
+  const [pokemons,setPokemons] = useState([]);
+  const fetchPokemons = async () => {
+    try{
+      setLoading(true)
+      const data = await getPokemon();
+      const promises = data.results.map(async (pokemon) =>{
+        return await getPokemonData(pokemon.url)
+      });
+
+      const results = await Promise.all(promises); 
+      setPokemons(results);
+      setLoading(false);
+    }
+    catch (error){
+      console.log("fetchPokemons error: ", error);
+    }
+  }
+  useEffect( () =>{
+    console.log("carregou")
+    fetchPokemons();
+  }, [])
   return (
     <div>
       <NavBar />
-      <SearchBar 
-        onSearch={onSearchHandler}
-      />
-      <div className="App">
-      </div>
+      <SearchBar />
+      <Pokedex pokemons={pokemons} loading={loading}/>
     </div>
   );
 }
